@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 
 class Log{
     private String nomeArquivo = "log_avl.txt";
@@ -31,8 +32,6 @@ class Log{
 
     public void fechar(){
         if(escritorLog != null){
-            registrar("\nSimulação encerrada: árvore AVL vazia.");
-
             escritorLog.close();
         }
     }
@@ -83,21 +82,67 @@ public class Main{
     }
 
     public static void main(String[] args){
+        Scanner entrada = new Scanner(System.in);
         Main simulador = new Main();
-        simulador.iniciar();
-    }
+        int opcao = 0;
 
-    public void iniciar(){
-        carregar("catalogo.csv");
+        do{
+            System.out.println("|------------------------------|");
+            System.out.println("| 1 - Carregamento Inicial     |");
+            System.out.println("| 2 - Executar Simulação       |");
+            System.out.println("| 3 - Listar Catálogo          |");
+            System.out.println("| 4 - Sair                     |");
+            System.out.println("|------------------------------|");
+            System.out.print("Digite uma opção: ");
 
-        executar();
-        
-        csv.fechar();
-        log.fechar();
+            try {
+                opcao = entrada.nextInt();
+            } 
+            catch(Exception e){
+                System.out.println("\nAlerta: Digite apenas números.");
+                entrada.nextLine();
+                opcao = 0;
+                continue;
+            }
+
+            switch(opcao){
+                case 1:
+                    System.out.println();
+                    simulador.carregar("catalogo.csv");
+                    System.out.println();
+                    break;
+
+                case 2:
+                    if(simulador.listaAuxiliar == null){
+                        System.out.println("\nAlerta: Carregue o catálogo antes da simulação.\n");
+                    } 
+                    else{
+                        simulador.executar();
+                        simulador.log.registrar("\nSimulação encerrada: árvore AVL vazia. Todos os produtos foram consumidos.");
+                        System.out.println();
+                    }
+
+                    break;
+
+                case 3:
+                    simulador.listarCatalogo();
+                    break;
+
+                case 4:
+                    System.out.println("\nEncerrando Sistema!");
+                    simulador.csv.fechar();
+                    simulador.log.fechar();
+                    break;
+
+                default:
+                    System.out.print("\nOpção Inválida!");
+                    break;    
+            }
+        } while(opcao != 4);
     }
 
     private void carregar(String nomeArquivo){
-        log.registrar("==============      INICIANDO CARREGAMENTO DO CATÁLOGO      ==============");
+        System.out.println("==============      INICIANDO CARREGAMENTO DO CATÁLOGO      ==============");
         List<Integer> codigosTemp = new ArrayList<>(); 
 
         try(BufferedReader br = new BufferedReader(new FileReader(nomeArquivo))){
@@ -124,12 +169,12 @@ public class Main{
                     }
                 }
                 catch (Exception e){
-                    log.registrar("ERRO: Linha mal formatada no catálogo: " + linha);
+                    log.registrar("Alerta: Linha mal formatada no catálogo: " + linha);
                 }
             }
         } 
         catch (IOException e){
-            log.registrar("ERRO: Falha ao ler " + nomeArquivo + ": " + e.getMessage());
+            log.registrar("Alerta: Falha ao ler " + nomeArquivo + ": " + e.getMessage());
         }
         
         this.listaAuxiliar = new int[codigosTemp.size()];
@@ -141,7 +186,7 @@ public class Main{
     }
 
     private void executar(){
-        log.registrar("\n==============   INICIANDO SIMULAÇÃO AUTOMÁTICA   ==============");
+        System.out.println("\n==============        INICIANDO SIMULAÇÃO AUTOMÁTICA        ==============");
         
         if(this.listaAuxiliar == null || this.listaAuxiliar.length == 0){
             log.registrar("ERRO: Lista de sorteio vazia.");
@@ -191,6 +236,19 @@ public class Main{
             csv.registrarVenda(codigo, quantidadeVendida);
             
             log.registrar("AVL atualmente com " + inventario.getTotal() + " produtos.");
+        }
+    }
+
+    public void listarCatalogo(){
+        if(inventario.estaVazia()){
+            System.out.println();
+            System.out.println("Alerta: O catálogo está vazio.");
+            System.out.println();
+        } 
+        else{
+            System.out.println("\n==============                ESTOQUE ATUAL                 ==============");
+            inventario.listarEmOrdem(inventario.raiz);
+            System.out.println();
         }
     }
 }
