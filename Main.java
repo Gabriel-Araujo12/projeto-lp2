@@ -31,7 +31,7 @@ class Log{
 
     public void fechar(){
         if(escritorLog != null){
-            registrar("\nSimulação encerrada: árvore AVL vazia. Todos os produtos foram consumidos.");
+            registrar("\nSimulação encerrada: árvore AVL vazia.");
 
             escritorLog.close();
         }
@@ -97,7 +97,7 @@ public class Main{
     }
 
     private void carregar(String nomeArquivo){
-        log.registrar("============== INICIANDO CARREGAMENTO DO CATÁLOGO ==============");
+        log.registrar("==============      INICIANDO CARREGAMENTO DO CATÁLOGO      ==============");
         List<Integer> codigosTemp = new ArrayList<>(); 
 
         try(BufferedReader br = new BufferedReader(new FileReader(nomeArquivo))){
@@ -120,7 +120,7 @@ public class Main{
                         codigosTemp.add(codigo); 
                     } 
                     else{
-                        log.registrar("Ignorado (estoque 0): " + nome);
+                        log.registrar("Alerta: Produto " + codigo + " não foi inserido pois a quantidade no estoque é incompatível.");
                     }
                 }
                 catch (Exception e){
@@ -137,11 +137,11 @@ public class Main{
             this.listaAuxiliar[i] = codigosTemp.get(i);
         }
 
-        log.registrar("---> CARGA CONCLUÍDA. Produtos na árvore: " + inventario.getTotal() + " ===");
+        log.registrar("AVL atualmente com " + inventario.getTotal() + " produtos.");
     }
 
     private void executar(){
-        log.registrar("\n============== INICIANDO SIMULAÇÃO AUTOMÁTICA ==============");
+        log.registrar("\n==============   INICIANDO SIMULAÇÃO AUTOMÁTICA   ==============");
         
         if(this.listaAuxiliar == null || this.listaAuxiliar.length == 0){
             log.registrar("ERRO: Lista de sorteio vazia.");
@@ -152,7 +152,7 @@ public class Main{
         while(!inventario.estaVazia()){
             int indiceSorteado = gerador.nextInt(this.listaAuxiliar.length);
             int codigoSorteado = this.listaAuxiliar[indiceSorteado];
-            int qntd = 1;
+            int qntd = gerador.nextInt(10) + 1;
 
             consumir(codigoSorteado, qntd);
         }
@@ -168,24 +168,29 @@ public class Main{
         }
 
         int estoqueAtual = produto.getQuantidadeEstoque();
+        int quantidadeVendida = 0;
         boolean vendaConfirmada = false;
 
         if(estoqueAtual <= qntd){
-            log.registrar("Venda (TOTAL): Prod " + codigo + " (" + produto.getNome() + "). Estoque zerou.");
+            quantidadeVendida = estoqueAtual;
+
+            log.registrar("Produto " + codigo + " consumido - " + quantidadeVendida + " unidades.");
             inventario.raiz = inventario.remover(inventario.raiz, codigo);
-            log.registrar("-> Produto " + codigo + " removido da árvore e balanceado.");
+            log.registrar("Produto " + codigo + " removido - estoque esgotado.");
             vendaConfirmada = true;
         } 
         else{
-            produto.reduzirEstoque(qntd);
-            log.registrar("Venda (Parcial): Prod " + codigo + ". Restam: " + produto.getQuantidadeEstoque());
+            quantidadeVendida = qntd;
+
+            produto.reduzirEstoque(quantidadeVendida);
+            log.registrar("Produto " + codigo + " consumido - " + quantidadeVendida + " unidades.");
             vendaConfirmada = true;
         }
 
         if(vendaConfirmada){
-            csv.registrarVenda(codigo, qntd);
+            csv.registrarVenda(codigo, quantidadeVendida);
             
-            log.registrar("Total de produtos distintos na árvore: " + inventario.getTotal());
+            log.registrar("AVL atualmente com " + inventario.getTotal() + " produtos.");
         }
     }
 }
